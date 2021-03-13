@@ -55,7 +55,30 @@ public class SearchUsersTags extends AppCompatActivity implements AdapterUserTag
 
         searchresults.hasFixedSize();
         searchresults.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
+        if (searchbar.getText().toString().equals("")){
+            fstore.collection("Users").orderBy("Username")
+                    .limit(10).addSnapshotListener(new EventListener<QuerySnapshot>() {
+                @Override
+                public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
+                    userModel.clear();
+                    for (QueryDocumentSnapshot doc : value) {
 
+                        if(doc.getId().equals(mAuth.getCurrentUser().getUid())){
+                            Log.i("SameUser","Sameuser");
+                        }
+
+                        else{
+                            Log.i("searchCheck", "onEvent:" + value.size());
+
+                            UserModel set = doc.toObject(UserModel.class);
+                            userModel.add(set);
+                            Log.i("searchCheck", "onEvent: "+set.getUsername());
+                            userAdapter.notifyDataSetChanged();
+                        }
+                    }
+                }
+            });
+        }
         searchbar.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -64,9 +87,11 @@ public class SearchUsersTags extends AppCompatActivity implements AdapterUserTag
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+
                 String searchKeyword = searchbar.getText().toString();
                 if (searchKeyword.equals("")){
-                    fstore.collection("Users")
+                    fstore.collection("Users").orderBy("Username")
                             .limit(10).addSnapshotListener(new EventListener<QuerySnapshot>() {
                         @Override
                         public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
@@ -89,6 +114,7 @@ public class SearchUsersTags extends AppCompatActivity implements AdapterUserTag
                         }
                     });
                 }
+
                 else{
                     fstore.collection("Users").whereEqualTo("Username",searchKeyword)
                             .limit(10).addSnapshotListener(new EventListener<QuerySnapshot>() {
@@ -97,22 +123,23 @@ public class SearchUsersTags extends AppCompatActivity implements AdapterUserTag
                             userModel.clear();
                             for (QueryDocumentSnapshot doc : value) {
 
-                                if(doc.getId().equals(mAuth.getCurrentUser().getUid())){
-                                    Log.i("SameUser","Sameuser");
-                                }
-
-                                else{
+                                if (doc.getId().equals(mAuth.getCurrentUser().getUid())) {
+                                    Log.i("SameUser", "Sameuser");
+                                } else {
                                     Log.i("searchCheck", "onEvent:" + value.size());
 
                                     UserModel set = doc.toObject(UserModel.class);
                                     userModel.add(set);
-                                    Log.i("searchCheck", "onEvent: "+set.getUsername());
+                                    Log.i("searchCheck", "onEvent: " + set.getUsername());
                                     userAdapter.notifyDataSetChanged();
                                 }
                             }
                         }
                     });
                 }
+
+
+
 
             }
 
